@@ -33,6 +33,12 @@ whole thing step by step. The rest are the pieces it assembles:
 
 Everything is built from source, against Ubuntu 26.04 under WSL2.
 
+## A note on AI
+
+AI was used heavily throughout this project. This is not meant to be a
+beautiful piece of software — it is meant to solve a problem I have: I want
+to be able to use GNOME on my Windows machine.
+
 [weaselway]: https://github.com/weaselway/weaselway
 [mutter]: https://github.com/weaselway/mutter
 [mesa]: https://github.com/weaselway/mesa
