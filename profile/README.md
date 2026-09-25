@@ -31,7 +31,10 @@ whole thing step by step. The rest are the pieces it assembles:
   and then stays out of the way.
 - **[freerdp]** — the SDL FreeRDP client on the Windows side.
 
-Everything is built from source, against Ubuntu 26.04 under WSL2.
+Everything targets Ubuntu 26.04 under WSL2. The installer uses prebuilt
+artifacts by default: mesa and mutter from a PPA, the FreeRDP client and the
+system distro image from GitHub releases. Only the dxgdrm module is built on
+your machine, and mesa/mutter can be built locally instead.
 
 ## A note on AI
 
