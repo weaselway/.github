@@ -7,9 +7,14 @@ It is for people who have to use a Windows machine, but would much rather have
 the comforts of GNOME while they do.
 
 WSLg already puts individual Linux app windows on the Windows desktop, using a
-compositor of its own. Weaselway replaces that with a whole session: mutter runs
-headless and serves it over RDP on a vsock, a FreeRDP client on the Windows side
-shows it, and Mesa's `d3d12` Gallium driver renders on the GPU Windows exposes.
+compositor of its own. Weaselway replaces that with a whole session. GNOME's
+own compositor drives a virtual display, which a small kernel module provides,
+the way it would drive a monitor, and Mesa's `d3d12` Gallium driver renders on the GPU Windows exposes.
+A daemon picks up each frame and hands it through shared memory to a FreeRDP
+client on the Windows side, which shows it.
+
+Since the compositor needs nothing special, the same setup runs Plasma. It is
+an option in the image's configuration rather than part of the image.
 
 Acceleration goes all the way up: Chromium runs fully GPU-accelerated, and the
 GNOME session holds 60 fps at 2560x1440 on a ten-year-old laptop.
@@ -22,11 +27,11 @@ Download `nixos-weaselway-<version>.wsl` from the [releases] and import it:
 wsl --install --from-file nixos-weaselway-<version>.wsl --name Gnome
 ```
 
-Everything is in the image: the patched mesa and mutter, the `dxgdrm` kernel
-module, the PipeWire audio bridge, and the Windows viewer itself. The one piece
-outside it is a small WSLg system distro, which `install-system-image` fetches
-for you. After that, `start-gnome-shell` and `start-viewer` bring up the
-desktop. The [weaselway] README walks through it step by step.
+Everything is in the image: the patched mesa, the `dxgdrm` kernel module, the
+`weaselwayd` daemon, the PipeWire audio bridge, and the Windows viewer itself.
+The one piece outside it is a small WSLg system distro, which
+`install-system-image` fetches for you. After that, `start-session` and
+`start-viewer` bring up the desktop. The [weaselway] README walks through it step by step.
 
 The system is a NixOS flake in `/etc/nixos`, so updating is
 `nix flake update` plus `nixos-rebuild switch`. The patched packages come
@@ -35,23 +40,25 @@ prebuilt from [weaselway.cachix.org][cachix], and a bad update is one
 
 ## The repos
 
-- **[weaselway]** — the NixOS module and the image flake, plus the older Ubuntu
-  setup scripts.
-- **[mutter]** — GNOME's compositor, serving the session over RDP on a vsock
-  instead of drawing to a display.
+- **[weaselway]** — the NixOS module and the image flake, and `weaselwayd`:
+  the daemon that reads the compositor's frames back, serves them over RDP on
+  a vsock, and turns the client's keyboard, mouse and touchpad into ordinary
+  input devices.
+- **[dxgdrm]** — the kernel module. It gives `d3d12` a real
+  `/dev/dri/renderD128`, which WSL otherwise never creates, and the compositor
+  a virtual display to drive.
 - **[mesa]** — the `d3d12` Gallium driver, with the dma-buf and sync-file work
-  needed to share buffers and fences on WSL.
-- **[dxgdrm]** — a small kernel module giving `d3d12` a real
-  `/dev/dri/renderD128`, which WSL otherwise never creates.
-- **[wslg]** — a slimmed WSLg system distro that publishes the transport details
-  and then stays out of the way. WSL only sets up the shared memory mutter hands
-  its frames over on when a system distro is configured.
+  needed to share buffers and fences on WSL, and to scan out on dxgdrm.
 - **[freerdp]** — the SDL FreeRDP client on the Windows side. It ships inside
   the image; `start-viewer` runs it from there.
+- **[wslg]** — a slimmed WSLg system distro that stays out of the way. WSL
+  only sets up the shared memory the frames are handed over on when a system
+  distro is configured.
+- **[mutter]** and **[kde-kwin]** — one fix each, neither specific to
+  Weaselway, kept on a branch until it is upstream. The image applies them as
+  patches to the compositors nixpkgs ships.
 
-The image is x86_64, built on nixos-26.05 and an unmodified [NixOS-WSL]. The
-older Ubuntu 26.04 setup, with packages from a PPA and install scripts, is still
-described in [README-ubuntu.md][ubuntu].
+The image is x86_64, built on nixos-26.05 and an unmodified [NixOS-WSL].
 
 ## A note on AI
 
@@ -62,10 +69,10 @@ to be able to use GNOME on my Windows machine.
 [weaselway]: https://github.com/weaselway/weaselway
 [releases]: https://github.com/weaselway/weaselway/releases
 [mutter]: https://github.com/weaselway/mutter
+[kde-kwin]: https://github.com/weaselway/kde-kwin
 [mesa]: https://github.com/weaselway/mesa
 [dxgdrm]: https://github.com/weaselway/dxgdrm
 [wslg]: https://github.com/weaselway/wslg
 [freerdp]: https://github.com/weaselway/freerdp
 [cachix]: https://weaselway.cachix.org
 [NixOS-WSL]: https://github.com/nix-community/NixOS-WSL
-[ubuntu]: https://github.com/weaselway/weaselway/blob/main/README-ubuntu.md
