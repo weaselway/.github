@@ -1,64 +1,66 @@
 # Weaselway
 
-A GPU-accelerated GNOME desktop on WSL2, shipped as a NixOS-WSL image, in a
-fullscreen window on Windows.
+A GPU-accelerated Linux desktop on WSL2, shown in a window on Windows and
+distributed as a NixOS-WSL image.
 
-It is for people who have to use a Windows machine, but would much rather have
-the comforts of GNOME while they do.
+Weaselway is for people who have to work on a Windows machine but would rather
+use a Linux desktop while they do.
 
-WSLg already puts individual Linux app windows on the Windows desktop, using a
-compositor of its own. Weaselway replaces that with a whole session. GNOME's
-own compositor drives a virtual display, which a small kernel module provides,
-the way it would drive a monitor, and Mesa's `d3d12` Gallium driver renders on the GPU Windows exposes.
-A daemon picks up each frame and hands it through shared memory to a FreeRDP
-client on the Windows side, which shows it.
+WSLg puts individual Linux application windows on the Windows desktop, using a
+compositor of its own. Weaselway runs a complete session instead. An unmodified
+Wayland compositor drives a virtual display, which a small kernel module
+provides, the same way it would drive a monitor. Mesa's `d3d12` Gallium driver
+renders on the GPU that Windows exposes. A daemon reads each frame and passes
+it through shared memory to a FreeRDP client on the Windows side.
 
-Since the compositor needs nothing special, the same setup runs Plasma. It is
-an option in the image's configuration rather than part of the image.
+Any compositor with a KMS backend can run this way. The image includes GNOME,
+Plasma is an option in its configuration, and sway, Weston, Hyprland and
+others start through a session script.
 
-Acceleration goes all the way up: Chromium runs fully GPU-accelerated, and the
-GNOME session holds 60 fps at 2560x1440 on a ten-year-old laptop.
+Applications are accelerated as well: Chromium runs fully GPU-accelerated, and
+a GNOME session holds 60 fps at 2560x1440 on a ten-year-old laptop.
 
 ## Getting it
 
 Download `nixos-weaselway-<version>.wsl` from the [releases] and import it:
 
 ```powershell
-wsl --install --from-file nixos-weaselway-<version>.wsl --name Gnome
+wsl --install --from-file nixos-weaselway-<version>.wsl --name Weaselway
 ```
 
-Everything is in the image: the patched mesa, the `dxgdrm` kernel module, the
-`weaselwayd` daemon, the PipeWire audio bridge, and the Windows viewer itself.
-The one piece outside it is a small WSLg system distro, which
-`install-system-image` fetches for you. After that, `start-session` and
-`start-viewer` bring up the desktop. The [weaselway] README walks through it step by step.
+The image contains the patched Mesa, the `dxgdrm` kernel module, the
+`weaselwayd` daemon, the audio configuration and the Windows viewer. The only
+separate download is a small WSLg system distro, which
+`ww-install-system-image` fetches. After that, `ww-start-session` and
+`ww-start-viewer` bring up the desktop. The [weaselway] README has the
+step-by-step instructions.
 
-The system is a NixOS flake in `/etc/nixos`, so updating is
-`nix flake update` plus `nixos-rebuild switch`. The patched packages come
-prebuilt from [weaselway.cachix.org][cachix], and a bad update is one
-`--rollback` away.
+The system is a NixOS flake in `/etc/nixos`. To update it, run
+`nix flake update` and `nixos-rebuild switch`. The patched packages are
+prebuilt on [weaselway.cachix.org][cachix], and
+`nixos-rebuild switch --rollback` undoes an update.
 
-## The repos
+## Repositories
 
-- **[weaselway]** — the NixOS module and the image flake, and `weaselwayd`:
-  the daemon that reads the compositor's frames back, serves them over RDP on
-  a vsock, and turns the client's keyboard, mouse and touchpad into ordinary
+- **[weaselway]**: the NixOS module, the image flake and `weaselwayd`, the
+  daemon that reads the compositor's frames back, serves them over RDP on a
+  vsock, and turns the client's keyboard, mouse and touchpad into ordinary
   input devices.
-- **[dxgdrm]** — the kernel module. It gives `d3d12` a real
-  `/dev/dri/renderD128`, which WSL otherwise never creates, and the compositor
-  a virtual display to drive.
-- **[mesa]** — the `d3d12` Gallium driver, with the dma-buf and sync-file work
-  needed to share buffers and fences on WSL, and to scan out on dxgdrm.
-- **[freerdp]** — the SDL FreeRDP client on the Windows side. It ships inside
-  the image; `start-viewer` runs it from there.
-- **[wslg]** — a slimmed WSLg system distro that stays out of the way. WSL
-  only sets up the shared memory the frames are handed over on when a system
-  distro is configured.
-- **[mutter]** and **[kde-kwin]** — one fix each, neither specific to
-  Weaselway, kept on a branch until it is upstream. The image applies them as
-  patches to the compositors nixpkgs ships.
+- **[dxgdrm]**: the kernel module. It gives `d3d12` a real
+  `/dev/dri/renderD128`, which WSL does not create, and gives the compositor a
+  virtual display to drive.
+- **[mesa]**: the `d3d12` Gallium driver, with the dma-buf and sync-file
+  changes needed to share buffers and fences on WSL and to scan out on dxgdrm.
+- **[freerdp]**: the SDL FreeRDP client for Windows. It is part of the image,
+  and `ww-start-viewer` runs it from there.
+- **[wslg]**: a reduced WSLg system distro. WSL sets up the shared memory used
+  for the frames only when a system distro is configured.
+- **[mutter]** and **[kde-kwin]**: one fix each, neither specific to
+  Weaselway, kept on a branch until it is merged upstream. The image applies
+  them as patches to the compositors from nixpkgs.
 
-The image is x86_64, built on nixos-26.05 and an unmodified [NixOS-WSL].
+The image is x86_64 and is built on nixos-26.05 with an unmodified
+[NixOS-WSL].
 
 ## A note on AI
 
