@@ -1,5 +1,7 @@
 # Weaselway
 
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/6HG8ac8XWZ)
+
 A GPU-accelerated Linux desktop on WSL2, shown in a window on Windows and
 distributed as a NixOS-WSL image.
 
