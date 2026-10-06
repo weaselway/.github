@@ -6,58 +6,104 @@ distributed as a NixOS-WSL image.
 Weaselway is for people who have to work on a Windows machine but would rather
 use a Linux desktop while they do.
 
-WSLg puts individual Linux application windows on the Windows desktop, using a
-compositor of its own. Weaselway runs a complete session instead. An unmodified
-Wayland compositor drives a virtual display, which a small kernel module
-provides, the same way it would drive a monitor. Mesa's `d3d12` Gallium driver
-renders on the GPU that Windows exposes. A daemon reads each frame and passes
-it through shared memory to a FreeRDP client on the Windows side.
+<!-- VIDEO (hero, 10-15 s, looping; upload the mp4 by dragging it into an issue
+     comment and use the user-attachments URL, or use a GIF under 10 MB): a
+     Windows desktop with the taskbar visible and GNOME in a window. Open
+     Chromium, resize the window to show the session following it, copy text and
+     paste it into Notepad. This is the first thing a visitor sees, so it should
+     answer "does this really work?" without any text. -->
 
-Any compositor with a KMS backend can run this way. The image includes GNOME,
-Plasma is an option in its configuration, and sway, Weston, Hyprland and
-others start through a session script.
+WSLg puts individual Linux application windows on the Windows desktop. Weaselway
+runs a complete session instead: GNOME, Plasma, sway or another compositor, in
+one window, with GPU acceleration, audio and the clipboard.
 
-Applications are accelerated as well: Chromium runs fully GPU-accelerated, and
-a GNOME session holds 60 fps at 2560x1440 on a ten-year-old laptop.
+<!-- IMAGE (side by side, same Windows desktop): left, WSLg with a few separate
+     Linux app windows next to Windows apps; right, Weaselway with one window
+     containing a full GNOME desktop. Answers "how is this different from WSLg?"
+     before the question comes up. -->
+
+Chromium runs fully GPU-accelerated, and a GNOME session holds 60 fps at
+2560x1440 on a ten-year-old laptop.
+
+<!-- IMAGE: a screenshot of the viewer's `/sdl-show-stats` overlay on that
+     laptop at 2560x1440 showing 60 fps. Name the laptop and its GPU in the
+     caption, so "ten-year-old laptop" becomes a checkable claim (ARCHITECTURE.md
+     in weaselway names an Intel HD 630 as a tested GPU). -->
 
 ## Getting it
 
-Download `nixos-weaselway-<version>.wsl` from the [releases] and import it:
+You need Windows with WSL2 on an x86_64 machine and a GPU whose Windows driver
+supports WSL. The image is about 1.4 GiB. It works with one WSL kernel release,
+currently `6.18.33.2-microsoft-standard-WSL2`, so a `wsl --update` that changes
+the kernel stops it until a new release catches up.
 
-```powershell
-wsl --install --from-file nixos-weaselway-<version>.wsl --name Weaselway
-```
+1. Download `nixos-weaselway-<version>.wsl` from the
+   [latest release][releases-latest] and import it in PowerShell:
 
-The image contains the patched Mesa, the `dxgdrm` kernel module, the
-`weaselwayd` daemon, the audio configuration and the Windows viewer. The only
-separate download is a small WSLg system distro, which
-`ww-install-system-image` fetches. After that, `ww-start-session` and
-`ww-start-viewer` bring up the desktop. The [weaselway] README has the
-step-by-step instructions.
+   ```powershell
+   wsl --install --from-file nixos-weaselway-<version>.wsl --name Weaselway
+   ```
+
+2. Inside the distro, run `ww-install-system-image` to fetch a small WSLg
+   system distro. It prints a line to add to `.wslconfig`. Then run
+   `wsl --shutdown`.
+3. Start Weaselway first, then run `ww-start-session` and `ww-start-viewer`.
+
+The [weaselway] README has the full instructions, including how to check that
+the GPU is used and how to uninstall.
+
+<!-- VIDEO (60-90 s screencast, linked here rather than embedded): from an empty
+     PowerShell window to the desktop, covering the three steps above. Link it
+     as "Watch the installation" so the page stays light. -->
 
 The system is a NixOS flake in `/etc/nixos`. To update it, run
 `nix flake update` and `nixos-rebuild switch`. The patched packages are
 prebuilt on [weaselway.cachix.org][cachix], and
 `nixos-rebuild switch --rollback` undoes an update.
 
+## Status
+
+GNOME and Plasma work, on one WSL kernel release at a time. The clipboard works in GNOME sessions only, for text and
+images but not files. Audio from web browsers can crackle, and the scale factor
+of the Windows display is not passed on. The [weaselway] README lists the
+limitations.
+
+## How it works
+
+Any compositor with a KMS backend can run this way. The image includes GNOME,
+Plasma is an option in its configuration, and sway, Weston, Hyprland and others
+start through a session script.
+
+An unmodified Wayland compositor drives a virtual display, which a small kernel
+module provides, the same way it would drive a monitor. Mesa's `d3d12` Gallium
+driver renders on the GPU that Windows exposes. A daemon reads each frame and
+passes it through shared memory to a FreeRDP client on the Windows side.
+
+```mermaid
+flowchart LR
+    comp["Wayland compositor<br/>GNOME, Plasma, sway, ..."]
+    dxgdrm["dxgdrm<br/>virtual display"]
+    wwd["weaselwayd"]
+    viewer["FreeRDP viewer<br/>on Windows"]
+
+    comp -- "renders with<br/>Mesa d3d12 on the GPU" --> dxgdrm
+    dxgdrm -- "each frame" --> wwd
+    wwd -- "shared memory<br/>and RDP" --> viewer
+    viewer -- "keyboard, mouse,<br/>touchpad, audio" --> wwd
+```
+
+The [weaselway] repository has a more detailed diagram.
+
 ## Repositories
 
-- **[weaselway]**: the NixOS module, the image flake and `weaselwayd`, the
-  daemon that reads the compositor's frames back, serves them over RDP on a
-  vsock, and turns the client's keyboard, mouse and touchpad into ordinary
-  input devices.
-- **[dxgdrm]**: the kernel module. It gives `d3d12` a real
-  `/dev/dri/renderD128`, which WSL does not create, and gives the compositor a
-  virtual display to drive.
-- **[mesa]**: the `d3d12` Gallium driver, with the dma-buf and sync-file
-  changes needed to share buffers and fences on WSL and to scan out on dxgdrm.
-- **[freerdp]**: the SDL FreeRDP client for Windows. It is part of the image,
-  and `ww-start-viewer` runs it from there.
-- **[wslg]**: a reduced WSLg system distro. WSL sets up the shared memory used
-  for the frames only when a system distro is configured.
-- **[mutter]** and **[kde-kwin]**: one fix each, neither specific to
-  Weaselway, kept on a branch until it is merged upstream. The image applies
-  them as patches to the compositors from nixpkgs.
+| Repository | What it is |
+|---|---|
+| **[weaselway]** | **Start here.** The NixOS module, the image flake and `weaselwayd`, the daemon that reads the compositor's frames back, serves them over RDP on a vsock, and turns the client's keyboard, mouse and touchpad into ordinary input devices. |
+| [dxgdrm] | The kernel module. It gives `d3d12` a real `/dev/dri/renderD128`, which WSL does not create, and gives the compositor a virtual display to drive. |
+| [mesa] | The `d3d12` Gallium driver, with the dma-buf and sync-file changes needed to share buffers and fences on WSL and to scan out on dxgdrm. |
+| [freerdp] | The SDL FreeRDP client for Windows. It is part of the image, and `ww-start-viewer` runs it from there. |
+| [wslg] | A reduced WSLg system distro. WSL sets up the shared memory used for the frames only when a system distro is configured. |
+| [mutter], [kde-kwin] | One fix each, neither specific to Weaselway, kept on a branch until it is merged upstream. The image applies them as patches to the compositors from nixpkgs. |
 
 The image is x86_64 and is built on nixos-26.05 with an unmodified
 [NixOS-WSL].
@@ -69,7 +115,7 @@ beautiful piece of software — it is meant to solve a problem I have: I want
 to be able to use GNOME on my Windows machine.
 
 [weaselway]: https://github.com/weaselway/weaselway
-[releases]: https://github.com/weaselway/weaselway/releases
+[releases-latest]: https://github.com/weaselway/weaselway/releases/latest
 [mutter]: https://github.com/weaselway/mutter
 [kde-kwin]: https://github.com/weaselway/kde-kwin
 [mesa]: https://github.com/weaselway/mesa
