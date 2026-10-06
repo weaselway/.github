@@ -6,21 +6,13 @@ distributed as a NixOS-WSL image.
 Weaselway is for people who have to work on a Windows machine but would rather
 use a Linux desktop while they do.
 
-<!-- VIDEO (hero, 10-15 s, looping; upload the mp4 by dragging it into an issue
-     comment and use the user-attachments URL, or use a GIF under 10 MB): a
-     Windows desktop with the taskbar visible and GNOME in a window. Open
-     Chromium, resize the window to show the session following it, copy text and
-     paste it into Notepad. This is the first thing a visitor sees, so it should
-     answer "does this really work?" without any text. -->
+https://github.com/user-attachments/assets/421018ab-684a-4c09-afc2-350e0ffb5089
 
 WSLg puts individual Linux application windows on the Windows desktop. Weaselway
 runs a complete session instead: GNOME, Plasma, sway or another compositor, in
 one window, with GPU acceleration, audio and the clipboard.
 
-<!-- IMAGE (side by side, same Windows desktop): left, WSLg with a few separate
-     Linux app windows next to Windows apps; right, Weaselway with one window
-     containing a full GNOME desktop. Answers "how is this different from WSLg?"
-     before the question comes up. -->
+![A full GNOME desktop in one window on the Windows desktop, running Chromium's GPU status page and NetQuake](https://raw.githubusercontent.com/weaselway/weaselway/main/doc/screenshot.png)
 
 Chromium runs fully GPU-accelerated, and a GNOME session holds 60 fps at
 2560x1440 on a ten-year-old laptop.
