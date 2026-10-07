@@ -39,8 +39,8 @@ the kernel stops it until a new release catches up.
    wsl --install --from-file nixos-weaselway-<desktop>-<version>.wsl --name Weaselway
    ```
 
-2. Run `wsl --shutdown` and start Weaselway first, then run `ww-start-session`
-   and `ww-start-viewer` inside it.
+2. Start Weaselway, then run `ww-start-session` and `ww-start-viewer` inside
+   it.
 
 The [weaselway] README has the full instructions, including how to uninstall.
 
