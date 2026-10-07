@@ -31,23 +31,21 @@ supports WSL. The image is about 1.4 GiB. It works with one WSL kernel release,
 currently `6.18.33.2-microsoft-standard-WSL2`, so a `wsl --update` that changes
 the kernel stops it until a new release catches up.
 
-1. Download `nixos-weaselway-<version>.wsl` from the
+1. Download `nixos-weaselway-gnome-<version>.wsl` or
+   `nixos-weaselway-plasma-<version>.wsl` from the
    [latest release][releases-latest] and import it in PowerShell:
 
    ```powershell
-   wsl --install --from-file nixos-weaselway-<version>.wsl --name Weaselway
+   wsl --install --from-file nixos-weaselway-<desktop>-<version>.wsl --name Weaselway
    ```
 
-2. Inside the distro, run `ww-install-system-image` to fetch a small WSLg
-   system distro. It prints a line to add to `.wslconfig`. Then run
-   `wsl --shutdown`.
-3. Start Weaselway first, then run `ww-start-session` and `ww-start-viewer`.
+2. Run `wsl --shutdown` and start Weaselway first, then run `ww-start-session`
+   and `ww-start-viewer` inside it.
 
-The [weaselway] README has the full instructions, including how to check that
-the GPU is used and how to uninstall.
+The [weaselway] README has the full instructions, including how to uninstall.
 
 <!-- VIDEO (60-90 s screencast, linked here rather than embedded): from an empty
-     PowerShell window to the desktop, covering the three steps above. Link it
+     PowerShell window to the desktop, covering the two steps above. Link it
      as "Watch the installation" so the page stays light. -->
 
 The system is a NixOS flake in `/etc/nixos`. To update it, run
@@ -96,7 +94,6 @@ The [weaselway] repository has a more detailed diagram.
 | [dxgdrm] | The kernel module. It gives `d3d12` a real `/dev/dri/renderD128`, which WSL does not create, and gives the compositor a virtual display to drive. |
 | [mesa] | The `d3d12` Gallium driver, with the dma-buf and sync-file changes needed to share buffers and fences on WSL and to scan out on dxgdrm. |
 | [freerdp] | The SDL FreeRDP client for Windows. It is part of the image, and `ww-start-viewer` runs it from there. |
-| [wslg] | A reduced WSLg system distro. WSL sets up the shared memory used for the frames only when a system distro is configured. |
 | [mutter], [kde-kwin] | One fix each, neither specific to Weaselway, kept on a branch until it is merged upstream. The image applies them as patches to the compositors from nixpkgs. |
 
 The image is x86_64 and is built on nixos-26.05 with an unmodified
@@ -114,7 +111,6 @@ to be able to use GNOME on my Windows machine.
 [kde-kwin]: https://github.com/weaselway/kde-kwin
 [mesa]: https://github.com/weaselway/mesa
 [dxgdrm]: https://github.com/weaselway/dxgdrm
-[wslg]: https://github.com/weaselway/wslg
 [freerdp]: https://github.com/weaselway/freerdp
 [cachix]: https://weaselway.cachix.org
 [NixOS-WSL]: https://github.com/nix-community/NixOS-WSL
