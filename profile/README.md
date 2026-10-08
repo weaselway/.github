@@ -71,20 +71,7 @@ module provides, the same way it would drive a monitor. Mesa's `d3d12` Gallium
 driver renders on the GPU that Windows exposes. A daemon reads each frame and
 passes it through shared memory to a FreeRDP client on the Windows side.
 
-```mermaid
-flowchart LR
-    comp["Wayland compositor<br/>GNOME, Plasma, sway, ..."]
-    dxgdrm["dxgdrm<br/>virtual display"]
-    wwd["weaselwayd"]
-    viewer["FreeRDP viewer<br/>on Windows"]
-
-    comp -- "renders with<br/>Mesa d3d12 on the GPU" --> dxgdrm
-    dxgdrm -- "each frame" --> wwd
-    wwd -- "shared memory<br/>and RDP" --> viewer
-    viewer -- "keyboard, mouse,<br/>touchpad, audio" --> wwd
-```
-
-The [weaselway] repository has a more detailed diagram.
+The [weaselway] repository has a diagram.
 
 ## Repositories
 
