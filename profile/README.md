@@ -8,7 +8,7 @@ distributed as a NixOS-WSL image.
 Weaselway is for people who have to work on a Windows machine but would rather
 use a Linux desktop while they do.
 
-https://github.com/user-attachments/assets/421018ab-684a-4c09-afc2-350e0ffb5089
+https://github.com/user-attachments/assets/4867b0d8-d69e-49d9-93f8-eb8ae73222fd
 
 WSLg puts individual Linux application windows on the Windows desktop. Weaselway
 runs a complete session instead: GNOME, Plasma, sway or another compositor, in
